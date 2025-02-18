@@ -1,0 +1,25 @@
+{
+    "debug.javascript.pickAndAttachOptions": {},
+    "files.associations": {
+        "*.tcc": "cpp",
+        "iostream": "cpp",
+        "array": "cpp",
+        "deque": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "string_view": "cpp",
+        "initializer_list": "cpp",
+        "ostream": "cpp",
+        "optional": "cpp",
+        "system_error": "cpp",
+        "functional": "cpp",
+        "tuple": "cpp",
+        "type_traits": "cpp",
+        "utility": "cpp",
+        "random": "cpp",
+        "atomic": "cpp",
+        "new": "cpp"
+    },
+    "editor.fontSize": 16
+}
