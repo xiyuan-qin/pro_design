@@ -1,34 +1,33 @@
 #include <iostream>
+#include <vector>
 using namespace std;
 
 int main() {
     long long l, r, k;
     cin >> l >> r >> k;
+    vector<long long> res;
+    long long current = 1;
     
-    long long num = 1;
-    bool found = false;
-    
-    // 处理k^0的情况，即1
-    if (num >= l && num <= r) {
-        cout << num << " ";
-        found = true;
+    if (current >= l && current <= r) {
+        res.push_back(current);
     }
     
-    while (true) {
-        long long next_num = num * k;
-        // 检查是否溢出或超过r
-        if (next_num > r || next_num < num) {  // 溢出或超过r则终止
-            break;
-        }
-        num = next_num;
-        if (num >= l) {  // 确认num在范围内
-            cout << num << " ";
-            found = true;
+    while (current <= r / k) {
+        current *= k;
+        if (current >= l && current <= r) {
+            res.push_back(current);
         }
     }
     
-    if (!found) {
+    if (res.empty()) {
         cout << -1;
+    } else {
+        for (size_t i = 0; i < res.size(); ++i) {
+            if (i > 0) {
+                cout << ' ';
+            }
+            cout << res[i];
+        }
     }
     cout << endl;
     
