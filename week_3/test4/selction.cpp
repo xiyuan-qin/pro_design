@@ -3,7 +3,7 @@
 
 using namespace std;
 
-bool isPrime(int n)
+bool isPrime(int n)//计算是否为素数
 {
     if(n==1) return false;
     if (n==2) return true;
@@ -14,15 +14,16 @@ bool isPrime(int n)
 
 void generateCombination(const vector<int>& nums, vector<int>& current, int start, 
     int k, vector<vector<int>>& result) {
-    if (current.size() == k) {
+
+    if (current.size() == k) {// 够了，存进result
         result.push_back(current);
         return;
     }
 
     for (int i = start; i < nums.size(); i++) {
-        current.push_back(nums[i]);
-        generateCombination(nums, current, i + 1, k, result);
-        current.pop_back();
+        current.push_back(nums[i]);//先存一个元素
+        generateCombination(nums, current, i + 1, k, result);//在下一个位置产生对应的排列
+        current.pop_back();//拿掉，下一个循环插入下一个元素
     }
 }
 
