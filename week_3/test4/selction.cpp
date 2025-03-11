@@ -39,8 +39,8 @@ int main(){
     vector<vector<int>> result;
     generateCombination(num, current, 0, k, result);
 
-    int count = 0;
-    for(vector<int> combination : result){
+    int count = 0;//素数的个数
+    for(vector<int> combination : result){//遍历所有的组合
         int sum = 0;
         for(int i = 0; i < k; i++){
             sum += combination[i];
