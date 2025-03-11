@@ -3,15 +3,15 @@
 
 using namespace std;
 
-// 递归函数：计算放置棋子的方案数
+// 计算棋子数
 int solve(vector<vector<char>>& board, vector<bool>& rowUsed, vector<bool>& colUsed, 
-          int n, int k, int pos, int count) {
-    // 已经放置k个棋子，找到一个解
+          int n, int k/*棋子数量*/, int pos/*从0到n*n */, int count) {// pos = row * n + col
+    // 已经放置k个棋子，找到一个
     if(count == k) {
         return 1;
-    }
+    }   
     
-    // 已考虑完所有位置但没放够k个棋子
+    // 已考虑完所有位置但没放够k个
     if(pos == n * n) {
         return 0;
     }
@@ -23,7 +23,7 @@ int solve(vector<vector<char>>& board, vector<bool>& rowUsed, vector<bool>& colU
     // 不在当前位置放棋子
     solutions += solve(board, rowUsed, colUsed, n, k, pos + 1, count);
     
-    // 在当前位置放棋子(如果满足条件)
+    // 在当前位置放棋子
     if(board[row][col] == '#' && !rowUsed[row] && !colUsed[col]) {
         rowUsed[row] = true;
         colUsed[col] = true;
@@ -49,11 +49,11 @@ int main(){
             }
         }
         
-        // 使用数组标记已被占用的行和列
+        //已被占用的行和列
         vector<bool> rowUsed(n, false);
         vector<bool> colUsed(n, false);
         
-        // 调用递归函数计算方案数
+        
         int count = solve(chessBoard, rowUsed, colUsed, n, k, 0, 0);
         cout << count << endl;
     }
