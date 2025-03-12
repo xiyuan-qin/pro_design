@@ -1,5 +1,0 @@
----
-triple:          'arm64-apple-darwin'
-binary-path:     '/Users/code/pro_design/week5/output/stoneHenge'
-relocations:     []
-...
