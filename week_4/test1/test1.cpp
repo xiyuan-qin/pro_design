@@ -1,7 +1,7 @@
 #include<iostream>
 #include<vector>
 #include<algorithm>
-
+#include<iomanip> 
 using namespace std;
 
 int main(){
@@ -11,28 +11,24 @@ int main(){
     for(int i = 0; i < n; i++){
         cin >> a[i];
     }
-    int ans = 0;
+    double ans = 0;
 
-    int  l = 0 , r = *min_element(a.begin(), a.end());
+    double l = 0.0 , r = *max_element(a.begin(), a.end());
 
-    
-
-    while(l <= r){
-        int mid = (l + r) / 2;
+    while(r - l > 1e-8){
+        double mid = (l + r) / 2;
         int temp = 0;
         for(int i = 0 ; i < a.size() ; i++ ){
-            temp += a[i] / mid;
+            temp += (int)(a[i] / mid); 
         }
         if(temp >= k){
             ans = mid;
-            l = mid + 1;
+            l = mid;
         }else{  
-            r = mid - 1;
+            r = mid;
         }
-
     }
 
-    cout << ans << endl;
+    cout << fixed << setprecision(6) << ans << endl; 
     return 0;
-
 }
