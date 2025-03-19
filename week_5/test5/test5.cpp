@@ -6,88 +6,70 @@ using namespace std;
 
 const int MOD = 1e9 + 7;
 
-struct Factor {
-    int prime;
-    int exponent;
-};
-
-vector<Factor> factorize(int c) {
-    vector<Factor> res;
+vector<pair<int, int>> factorize(int c) {
+    vector<pair<int, int>> res;
     if (c == 1) return res;
-    for (int i = 2; i * i <= c; ++i) {
-        if (c % i == 0) {
+    for (int p = 2; p * p <= c; ++p) {
+        if (c % p == 0) {
             int cnt = 0;
-            while (c % i == 0) {
+            while (c % p == 0) {
                 cnt++;
-                c /= i;
+                c /= p;
             }
-            Factor f;
-            f.prime = i;
-            f.exponent = cnt;
-            res.push_back(f);
+            res.emplace_back(p, cnt);
         }
     }
-    if (c > 1) {
-        Factor f;
-        f.prime = c;
-        f.exponent = 1;
-        res.push_back(f);
+    if (c > 1) res.emplace_back(c, 1);
+    return res;
+}
+
+vector<vector<pair<int, int>>> precompute_factors() {
+    vector<vector<pair<int, int>>> factors(101);
+    for (int c = 0; c <= 100; ++c) {
+        factors[c] = factorize(c);
+    }
+    return factors;
+}
+
+long long mod_pow(long long a, long long b, long long mod) {
+    long long res = 1;
+    a %= mod;
+    while (b > 0) {
+        if (b % 2 == 1)
+            res = res * a % mod;
+        a = a * a % mod;
+        b /= 2;
     }
     return res;
 }
 
-long long pow_mod(long long base, long long exp, long long mod) {
-    long long result = 1;
-    base %= mod;
-    while (exp > 0) {
-        if (exp % 2 == 1) {
-            result = (result * base) % mod;
-        }
-        base = (base * base) % mod;
-        exp /= 2;
-    }
-    return result;
-}
-
 int main() {
     ios::sync_with_stdio(false);
-    cin.tie(0);
-    
+    cin.tie(nullptr);
+    auto pre_factors = precompute_factors();
     int n, m;
     cin >> n >> m;
-    
-    vector<vector<Factor>> pre_factor(101);
-    for (int c = 1; c <= 100; ++c) {
-        pre_factor[c] = factorize(c);
-    }
-    
     unordered_map<int, vector<long long>> diff_map;
-    
-    for (int i = 0; i < m; ++i) {
+
+    while (m--) {
         int l, r, c, b;
         cin >> l >> r >> c >> b;
-        if (c == 1) continue;
-        vector<Factor> factors = pre_factor[c];
-        for (int j = 0; j < factors.size(); ++j) {
-            int p = factors[j].prime;
-            int e = factors[j].exponent;
-            long long add = (long long)e * b;
-            if (add == 0) continue;
-            if (diff_map.find(p) == diff_map.end()) {
-                diff_map[p] = vector<long long>(n + 2, 0LL);
+        if (b == 0) continue;
+        const auto& factors = pre_factors[c];
+        for (const auto& [p, k] : factors) {
+            long long delta = static_cast<long long>(k) * b;
+            if (delta == 0) continue;
+            auto& diff = diff_map[p];
+            if (diff.empty()) {
+                diff.resize(n + 2, 0);
             }
-            vector<long long>& diff = diff_map[p];
-            diff[l] += add;
-            if (r + 1 <= n) {
-                diff[r + 1] -= add;
-            }
+            diff[l] += delta;
+            diff[r + 1] -= delta;
         }
     }
-    
+
     long long result = 1;
-    for (unordered_map<int, vector<long long>>::iterator it = diff_map.begin(); it != diff_map.end(); ++it) {
-        int p = it->first;
-        vector<long long>& diff = it->second;
+    for (auto& [p, diff] : diff_map) {
         long long current = 0;
         long long min_exp = LLONG_MAX;
         for (int i = 1; i <= n; ++i) {
@@ -97,10 +79,10 @@ int main() {
             }
         }
         if (min_exp > 0) {
-            result = (result * pow_mod(p, min_exp, MOD)) % MOD;
+            result = result * mod_pow(p, min_exp, MOD) % MOD;
         }
     }
-    
+
     cout << result << endl;
     return 0;
 }
