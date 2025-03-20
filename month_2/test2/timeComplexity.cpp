@@ -154,10 +154,7 @@ public:
             return Token(NUMBER, value);
         }
         
-        char c = input[position];
-        position++; // 跳过无法识别的字符
-        cerr << "Skipping unrecognized character: '" << c << "' (ASCII: " << (int)c << ")" << endl;
-        return Token(INVALID);
+       
     }
 
     // 回退位置
