@@ -11,7 +11,7 @@ bool checkUp(vector<vector<int>>& matrix, int i, int j) {
 }
 
 bool checkDown(vector<vector<int>>& matrix, int i, int j) {
-    if(i == matrix[0].size() - 1) return true; // 最后一行一定是最高的
+    if(i == matrix.size() - 1) return true; // 最后一行一定是最高的
     return matrix[i][j] > matrix[i + 1][j];
 }
 
@@ -21,7 +21,7 @@ bool checkLeft(vector<vector<int>>& matrix, int i, int j) {
 }
 
 bool checkRight(vector<vector<int>>& matrix, int i, int j) {
-    if(j == matrix.size() - 1) return true; // 最后一列一定是最高的
+    if(j == matrix[0].size() - 1) return true; // 最后一列一定是最高的
     return matrix[i][j] > matrix[i][j + 1];
 }
 
