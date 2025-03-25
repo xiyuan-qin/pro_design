@@ -20,6 +20,12 @@ public:
             element_counts[element] += count;
         }
     }
+
+    void scale(int multiplier){
+        for(auto& [element , count] : element_counts){
+            count *= multiplier;
+        }
+    }
 };
 
 ElementCounts parseFormula(const string& formula , int pos){
@@ -43,6 +49,11 @@ ElementCounts parseFormula(const string& formula , int pos){
         }
     }
 }
+
+int parseNumber(const string& formula , int pos);
+
+string parseElement(const string& formula , int pos);
+
 
 vector<string> splitString(const string& equation, char delimiter){
 
