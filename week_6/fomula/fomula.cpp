@@ -1,135 +1,142 @@
-#include<iostream>
-#include<algorithm>
-#include<vector>
-#include<stack>
-#include<map>
+#include <iostream>
+#include <string>
+#include <map>
+#include <cctype>
 
 using namespace std;
 
-class ElementCounts{
-public:
-    map<string, int> element_counts;
+// 解析化学式，返回每种元素的原子数
+map<string, long long> parseFormula(const string& formula, int& pos);
 
-    bool isEqual(const ElementCounts& other) const{
-        return element_counts == other.element_counts;
-    }
-
-    void merge(const ElementCounts& other){
-        for(const auto& [element , count] : other.element_counts){
-            element_counts[element] += count;
-        }
-    }
-
-    void scale(int multiplier){
-        for(auto& [element , count] : element_counts){
-            count *= multiplier;
-        }
-    }
-};
-
-// 添加前向声明
-int parseNumber(const string& formula, int& pos);
-string parseElement(const string& formula, int& pos);
-
-ElementCounts parseFormula(const string& formula, int& pos){
-    ElementCounts current_count;
-    int base_multiplier = parseNumber(formula, pos);
+// 解析元素或括号内的化学式
+map<string, long long> parseTerm(const string& formula, int& pos) {
+    map<string, long long> elements;
     
-    while (pos < formula.size()){
-        if(formula[pos] == '('){
-            pos++; // 跳过左括号
-            ElementCounts sub_formula = parseFormula(formula, pos);
-            sub_formula.scale(base_multiplier);
-            base_multiplier = 1; // 重置乘数，只用于第一次
-            current_count.merge(sub_formula);
-        }
-        else if(formula[pos] == ')'){
-            pos++; // 跳过右括号
-            return current_count; // 括号闭合时返回当前结果
-        }
-        else{
-            string element = parseElement(formula, pos);
-            int element_count = parseNumber(formula, pos);
-            current_count.element_counts[element] += element_count * base_multiplier;
-            base_multiplier = 1; // 重置乘数，只用于第一次
-        }
-    }
-    return current_count;
-}
-
-// 实现这些函数
-int parseNumber(const string& formula, int& pos) {
-    int result = 0;
-    while (pos < formula.length() && isdigit(formula[pos])) {
-        result = result * 10 + (formula[pos] - '0');
-        pos++;
-    }
-    return result == 0 ? 1 : result;  // 如果没有数字，返回1作为默认乘数
-}
-
-string parseElement(const string& formula, int& pos) {
-    string element;
-    // 元素的第一个字母必须是大写
-    if (pos < formula.length() && isupper(formula[pos])) {
+    if (formula[pos] == '(') {
+        pos++; // 跳过左括号
+        elements = parseFormula(formula, pos);
+        pos++; // 跳过右括号
+    } else {
+        string element;
         element += formula[pos++];
-        // 元素可能有第二个小写字母
+        
+        // 如果后面跟着小写字母，则是两字母元素
         if (pos < formula.length() && islower(formula[pos])) {
             element += formula[pos++];
         }
+        
+        elements[element] = 1;
     }
-    return element;
+    
+    // 解析系数
+    long long count = 0;
+    while (pos < formula.length() && isdigit(formula[pos])) {
+        count = count * 10 + (formula[pos++] - '0');
+    }
+    
+    // 如果没有指定系数，默认为1
+    if (count == 0) {
+        count = 1;
+    }
+    
+    // 将项中的元素乘以系数
+    for (auto& elem : elements) {
+        elem.second *= count;
+    }
+    
+    return elements;
 }
 
-vector<string> splitString(const string& equation, char delimiter){
-    vector<string> tokens;
-    string token;
-    for(char ch : equation){
-        if(ch == delimiter){
-            if(!token.empty()){
-                tokens.push_back(token);
-                token.clear();
-            }
-        }
-        else{
-            token += ch;
+// 解析化学式
+map<string, long long> parseFormula(const string& formula, int& pos) {
+    map<string, long long> elements;
+    
+    while (pos < formula.length() && formula[pos] != '+' && formula[pos] != '=' && formula[pos] != ')') {
+        map<string, long long> termElements = parseTerm(formula, pos);
+        
+        // 合并项中的元素到化学式
+        for (const auto& elem : termElements) {
+            elements[elem.first] += elem.second;
         }
     }
-    if(!token.empty()){
-        tokens.push_back(token);
-    }
-    return tokens;
+    
+    return elements;
 }
 
-bool isBalancedEquation(const string& equation){
-    vector<string> equation_sides = splitString(equation, '=');
-    ElementCounts left_side , right_side;
-    for(int side = 0 ; side < 2 ; side ++){
-        vector<string> formulas = splitString(equation_sides[side], '+');
-        for(const string& formula : formulas){
-            int pos = 0;
-            ElementCounts formula_counts = parseFormula(formula, pos);
-            if(side == 0) left_side.merge(formula_counts);
-            else right_side.merge(formula_counts);
+// 解析表达式，即化学式的组合
+map<string, long long> parseExpression(const string& expr) {
+    map<string, long long> totalElements;
+    int pos = 0;
+    
+    while (pos < expr.length()) {
+        // 解析系数
+        long long coef = 0;
+        while (pos < expr.length() && isdigit(expr[pos])) {
+            coef = coef * 10 + (expr[pos++] - '0');
+        }
+        
+        // 如果没有指定系数，默认为1
+        if (coef == 0) {
+            coef = 1;
+        }
+        
+        // 解析化学式
+        map<string, long long> formulaElements = parseFormula(expr, pos);
+        
+        // 将化学式中的元素乘以系数
+        for (const auto& elem : formulaElements) {
+            totalElements[elem.first] += elem.second * coef;
+        }
+        
+        // 跳过加号
+        if (pos < expr.length() && expr[pos] == '+') {
+            pos++;
         }
     }
-
-    return left_side.isEqual(right_side);
+    
+    return totalElements;
 }
 
-int main(){
-    int n ;
+// 判断化学方程式是否配平
+bool isBalanced(const string& equation) {
+    // 分割等号左右两边的表达式
+    size_t eqPos = equation.find('=');
+    string leftExpr = equation.substr(0, eqPos);
+    string rightExpr = equation.substr(eqPos + 1);
+    
+    // 解析左右两边的表达式
+    map<string, long long> leftElements = parseExpression(leftExpr);
+    map<string, long long> rightElements = parseExpression(rightExpr);
+    
+    // 比较左右两边的元素原子数
+    if (leftElements.size() != rightElements.size()) {
+        return false;
+    }
+    
+    for (const auto& elem : leftElements) {
+        if (rightElements.find(elem.first) == rightElements.end() || 
+            rightElements[elem.first] != elem.second) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+int main() {
+    int n;
     cin >> n;
-
-    while(n--){
-        string s;
-        cin >> s;
-
-        if(isBalancedEquation(s)){
-            puts("Y");
-        }
-        else{
-            puts("N");
+    
+    for (int i = 0; i < n; i++) {
+        string equation;
+        cin >> equation;
+        
+        if (isBalanced(equation)) {
+            cout << "Y" << endl;
+        } else {
+            cout << "N" << endl;
         }
     }
+    
     return 0;
 }

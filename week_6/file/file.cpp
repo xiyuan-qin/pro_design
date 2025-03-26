@@ -1,176 +1,200 @@
-#include<iostream>
-#include<map>
-#include<vector>
-#include<string>
-#include<sstream>
-
+#include <iostream>
+#include <sstream>
+#include <vector>
+#include <string>
+#include <map>
 using namespace std;
 
-class File{
-public:
-    bool isDir;
+#define ll long long
+const ll inf = 1e18;
 
-    long long LD , LR;// 给定配额
-    int SD , SR;// 实际配额
-
-    map<string, File> children;// 节点之后的孩子
-
-    long long fileSize;
-
-    File(){
-        LD = LR = 1e9;
-        SD = SR = 0;
-        fileSize = 0;
+struct FileNode {
+    bool isDir;            // 是否为目录
+    ll ld, lr;             // 目录配额、后代配额
+    ll sd, sr;             // 目录已用配额、后代已用配额
+    map<string, FileNode*> children; // 子一级文件、目录
+    ll fileSize;           // 文件大小
+    
+    FileNode() {           // 构造函数
         isDir = true;
+        ld = lr = inf;
+        sd = sr = 0;
+        fileSize = 0;
     }
+};
 
-}root;
+FileNode root;
 
-vector<string> nameList;
-vector<File*> nodeList;
-
-
-void change_quota(int inc, bool isFile = true){
-    for(int i = 0; i < nodeList.size(); i++){
-        nodeList[i]->SR += inc;
-        if(i == nodeList.size() - 2 && isFile){
-            nodeList[i]->SD += inc;
-        }
+// 根据路径分割文件名
+vector<string> split(string &path) {
+    stringstream ss(path);
+    string part;
+    vector<string> res;
+    while (getline(ss, part, '/')) {
+        res.push_back(part);
     }
+    return res;
 }
 
-bool create(){
-    int fileSize;
-    cin >> fileSize;
-
-    int inc = fileSize;
-
-    auto lastNode = nodeList.back();
-
-    if(nameList.size() == nodeList.size()){
-        if(lastNode->isDir){
-            return false;
-        }
-        inc = fileSize - lastNode->fileSize;
+// 查找路径上的所有文件/目录
+vector<FileNode*> findFile(vector<string> &fileNames) {
+    vector<FileNode*> res;
+    res.push_back(&root);
+    for (int i = 1; i < fileNames.size(); ++i) {
+        if (res.back()->isDir == false) break;  // 该文件非目录，无法进行操作
+        if (res.back()->children.count(fileNames[i]) == 0) break;  // 目录下未找到指定文件/目录
+        res.push_back(res.back()->children[fileNames[i]]);  // 找到了指定文件/目录，加入res
     }
-    else{
-        if(!lastNode->isDir){
-            return false;
+    return res;
+}
+
+// 创建文件
+bool create() {
+    string path;
+    ll fileSize;
+    cin >> path >> fileSize;
+    
+    vector<string> fileNames = split(path);
+    vector<FileNode*> filePtrs = findFile(fileNames);
+    
+    ll inc;
+    if (fileNames.size() == filePtrs.size()) {  // 文件已存在
+        if (filePtrs.back()->isDir) {
+            return false;  // 是目录文件，创建失败
+        } else {
+            inc = fileSize - filePtrs.back()->fileSize;  // 替换文件，计算增量
+        }
+    } else {  // 需要创建目录或文件
+        if (!filePtrs.back()->isDir) {
+            return false;  // 中间路径有非目录，创建失败
+        }
+        inc = fileSize;  // 新建文件，增量为文件大小
+    }
+    
+    // 检查配额限制
+    // 后代配额检查
+    for (int i = 0; i < filePtrs.size(); ++i) {
+        if (filePtrs[i]->sr + inc > filePtrs[i]->lr) {
+            return false;  // 配额检查失败
         }
     }
-
-    for(int i = 0 ; i < nodeList.size(); i++){
-        if(nodeList[i]->SR + inc > nodeList[i]->LR){
-            return false;
-        }
-
-        if(i == nodeList.size() - 2){
-            if(nodeList[i]->SD + inc > nodeList[i]->LD){
-                return false;
-            }
-        }
+    
+    // 目录配额检查
+    int i = fileNames.size() - 2;
+    if (i < filePtrs.size() && filePtrs[i]->sd + inc > filePtrs[i]->ld) {
+        return false;  // 配额检查失败
     }
-    for(int i = nodeList.size(); i < nameList.size(); i--){
-       nodeList.push_back(&nodeList.back()->children[nameList[i]]);
+    
+    // 补齐路径
+    for (int i = filePtrs.size(); i < fileNames.size(); ++i) {
+        FileNode* newNode = new FileNode();
+        filePtrs.back()->children[fileNames[i]] = newNode;
+        filePtrs.push_back(newNode);
     }
-    change_quota(inc);
-
-    nodeList.back()->fileSize = fileSize;
-    nodeList.back()->isDir = false;
+    
+    // 创建文件基本信息写入
+    filePtrs.back()->isDir = false;
+    filePtrs.back()->fileSize = fileSize;
+    
+    // 修改祖先的后代已用配额
+    for (auto &node : filePtrs) {
+        node->sr += inc;
+    }
+    
+    // 修改父亲的目录已用配额
+    if (filePtrs.size() > 1) {
+        filePtrs[filePtrs.size() - 2]->sd += inc;
+    }
+    
     return true;
-        
 }
 
-
-void upd_path(){
-    nameList.clear();
-    nodeList.clear();
-
+// 移除文件
+bool remove() {
     string path;
     cin >> path;
-
-    string cur;
-
-    stringstream ss(path);
-    while(getline(ss, cur, '/')){
-        nameList.push_back(cur);
+    
+    vector<string> fileNames = split(path);
+    vector<FileNode*> filePtrs = findFile(fileNames);
+    
+    if (filePtrs.size() != fileNames.size()) {
+        return true;  // 文件不存在，视为成功
     }
-
-    File *f = &root;
-    nodeList.push_back(f);
-
-    for(int i = 1; i < nameList.size(); i++){
-
-        string &cur_name = nameList[i];
-        if(!f->isDir || f->children.count(cur_name) == 0){
-            break;
+    
+    if (filePtrs.back()->isDir) {  // 目录文件
+        // 对路径上的祖先后代已用配额减去该目录的所有后代已用配额
+        for (auto &node : filePtrs) {
+            node->sr -= filePtrs.back()->sr;
         }
-
-        f = &f->children[cur_name];
-        nodeList.push_back(f);
+    } else {  // 普通文件
+        // 对路径上的祖先后代已用配额减去该文件大小
+        for (auto &node : filePtrs) {
+            node->sr -= filePtrs.back()->fileSize;
+        }
+        // 父亲的目录已用配额减去文件大小
+        filePtrs[filePtrs.size() - 2]->sd -= filePtrs.back()->fileSize;
     }
-
-}
-
-bool remove(){
-    if(nameList.size() != nodeList.size() ){
-        return true;
-    }
-
-    auto lastNode = nodeList.back();
-    if(lastNode->isDir){
-        change_quota(-lastNode->SR, false);
-    }
-    else{
-        change_quota(-lastNode->fileSize);
-    }
-
-    nodeList[nodeList.size() - 2]->children.erase(nameList.back());
+    
+    // 移除文件
+    FileNode* nodeToDelete = filePtrs.back();
+    filePtrs[filePtrs.size() - 2]->children.erase(fileNames.back());
+    delete nodeToDelete;
+    
     return true;
 }
 
-
-bool quota(){//修改
-    int LD, LR;
-    cin >> LD >> LR;
-
-    if(LD == 0) LD = 1e9;
-
-    if(LR == 0) LR = 1e9;
-
-    if(nameList.size() != nodeList.size()){
+// 设置配额
+bool quota() {
+    string path;
+    ll ld, lr;
+    cin >> path >> ld >> lr;
+    
+    // 若配额值为0，表示不限制
+    ld = (ld == 0) ? inf : ld;
+    lr = (lr == 0) ? inf : lr;
+    
+    vector<string> fileNames = split(path);
+    vector<FileNode*> filePtrs = findFile(fileNames);
+    
+    if (filePtrs.size() != fileNames.size()) {
+        return false;  // 目录不存在
+    }
+    
+    if (!filePtrs.back()->isDir) {
+        return false;  // 不是目录文件
+    }
+    
+    // 判断修改后目录的sd、sr是否超出新配额
+    if (filePtrs.back()->sd > ld || filePtrs.back()->sr > lr) {
         return false;
     }
-
-    auto lastNode = nodeList.back();
-
-
-    if(!lastNode->isDir) return false;
-
-    if(lastNode->SD > LD || lastNode->SR > LR) return false;
-
-    lastNode->LD = LD;
-    lastNode->LR = LR;
-
+    
+    // 完成配额修改
+    filePtrs.back()->ld = ld;
+    filePtrs.back()->lr = lr;
+    
     return true;
 }
 
-int main(){
-    int n ;
+int main() {
+    ios::sync_with_stdio(false);
+    int n;
     cin >> n;
-    while(n--){
+    
+    while (n--) {
         char op;
         cin >> op;
-        bool is_success = false;
-
-        upd_path();
-
-        if(op == 'C') is_success = create();
-        if(op == 'R') is_success = remove();
-        if(op == 'Q') is_success = quota();
-
-        if(is_success) cout << "Y" << endl;
-        else cout << "N" << endl;
+        bool res;
+        
+        switch (op) {
+            case 'C': res = create(); break;
+            case 'R': res = remove(); break;
+            case 'Q': res = quota(); break;
+        }
+        
+        if (res) cout << "Y\n";
+        else cout << "N\n";
     }
+    
     return 0;
 }
