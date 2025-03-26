@@ -29,6 +29,16 @@ public:
 vector<string> nameList;
 vector<File*> nodeList;
 
+
+void change_quota(int inc, bool isFile = true){
+    for(int i = 0; i < nodeList.size(); i++){
+        nodeList[i]->SR += inc;
+        if(i == nodeList.size() - 2 && isFile){
+            nodeList[i]->SD += inc;
+        }
+    }
+}
+
 bool create(){
     int fileSize;
     cin >> fileSize;
@@ -71,14 +81,6 @@ bool create(){
         
 }
 
-void change_quota(int inc, bool isFile = true){
-    for(int i = 0; i < nodeList.size(); i++){
-        nodeList[i]->SR += inc;
-        if(i == nodeList.size() - 2 && isFile){
-            nodeList[i]->SD += inc;
-        }
-    }
-}
 
 void upd_path(){
     nameList.clear();
@@ -170,4 +172,5 @@ int main(){
         if(is_success) cout << "Y" << endl;
         else cout << "N" << endl;
     }
+    return 0;
 }

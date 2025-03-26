@@ -4,7 +4,6 @@
 #include<stack>
 #include<map>
 
-
 using namespace std;
 
 class ElementCounts{
@@ -28,35 +27,77 @@ public:
     }
 };
 
-ElementCounts parseFormula(const string& formula , int pos){
+// 添加前向声明
+int parseNumber(const string& formula, int& pos);
+string parseElement(const string& formula, int& pos);
+
+ElementCounts parseFormula(const string& formula, int& pos){
     ElementCounts current_count;
     int base_multiplier = parseNumber(formula, pos);
+    
     while (pos < formula.size()){
         if(formula[pos] == '('){
-            pos++;
+            pos++; // 跳过左括号
             ElementCounts sub_formula = parseFormula(formula, pos);
+            sub_formula.scale(base_multiplier);
+            base_multiplier = 1; // 重置乘数，只用于第一次
             current_count.merge(sub_formula);
         }
         else if(formula[pos] == ')'){
-            pos++;
-            int bracket_multiplier = parseNumber(formula, pos);
-            current_count.scale(bracket_multiplier);
+            pos++; // 跳过右括号
+            return current_count; // 括号闭合时返回当前结果
         }
         else{
             string element = parseElement(formula, pos);
             int element_count = parseNumber(formula, pos);
-            current_count.element_counts[element] += element_count;
+            current_count.element_counts[element] += element_count * base_multiplier;
+            base_multiplier = 1; // 重置乘数，只用于第一次
         }
     }
+    return current_count;
 }
 
-int parseNumber(const string& formula , int pos);
+// 实现这些函数
+int parseNumber(const string& formula, int& pos) {
+    int result = 0;
+    while (pos < formula.length() && isdigit(formula[pos])) {
+        result = result * 10 + (formula[pos] - '0');
+        pos++;
+    }
+    return result == 0 ? 1 : result;  // 如果没有数字，返回1作为默认乘数
+}
 
-string parseElement(const string& formula , int pos);
-
+string parseElement(const string& formula, int& pos) {
+    string element;
+    // 元素的第一个字母必须是大写
+    if (pos < formula.length() && isupper(formula[pos])) {
+        element += formula[pos++];
+        // 元素可能有第二个小写字母
+        if (pos < formula.length() && islower(formula[pos])) {
+            element += formula[pos++];
+        }
+    }
+    return element;
+}
 
 vector<string> splitString(const string& equation, char delimiter){
-
+    vector<string> tokens;
+    string token;
+    for(char ch : equation){
+        if(ch == delimiter){
+            if(!token.empty()){
+                tokens.push_back(token);
+                token.clear();
+            }
+        }
+        else{
+            token += ch;
+        }
+    }
+    if(!token.empty()){
+        tokens.push_back(token);
+    }
+    return tokens;
 }
 
 bool isBalancedEquation(const string& equation){
@@ -74,9 +115,6 @@ bool isBalancedEquation(const string& equation){
 
     return left_side.isEqual(right_side);
 }
-
-
-
 
 int main(){
     int n ;
