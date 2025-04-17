@@ -1,75 +1,67 @@
 #include<iostream>
 #include<vector>
-#include<algorithm> 
+#include<algorithm>
+#include<stack>
 
 using namespace std;
 
-bool check(vector<bool>& visited){
-    for(auto x : visited){
-        if(!x) return false;
+vector<vector<int>> graph;
+vector<int> dfn, low, scc_id, indegree_scc;
+vector<bool> in_stack;
+stack<int> stk;
+int idx = 0, scc_cnt = 0;
+
+void tarjan(int u) {
+    dfn[u] = low[u] = ++idx;
+    stk.push(u);
+    in_stack[u] = true;
+    for (int v : graph[u]) {
+        if (!dfn[v]) {
+            tarjan(v);
+            low[u] = min(low[u], low[v]);
+        } else if (in_stack[v]) {
+            low[u] = min(low[u], dfn[v]);
+        }
     }
-    return true;
+    if (dfn[u] == low[u]) {
+        ++scc_cnt;
+        int x;
+        do {
+            x = stk.top(); stk.pop();
+            in_stack[x] = false;
+            scc_id[x] = scc_cnt;
+        } while (x != u);
+    }
 }
 
-class UnionFind{
-public:
-    vector<int> parent;
-    vector<int> rank;
-
-    UnionFind(int n){
-        parent.resize(n + 1);
-        rank.resize(n + 1, 0);
-        for(int i = 0; i <= n; i++){
-            parent[i] = i;
-        }
+int main(){
+    int n, m;
+    cin >> n >> m;
+    graph.assign(n + 1, vector<int>());
+    dfn.assign(n + 1, 0);
+    low.assign(n + 1, 0);
+    scc_id.assign(n + 1, 0);
+    in_stack.assign(n + 1, false);
+    for(int i = 0; i < m; ++i){
+        int a, b;
+        cin >> a >> b;
+        graph[a].push_back(b);
     }
-
-    int find(int x){
-        if(parent[x] != x){
-            parent[x] = find(parent[x]);
-        }
-        return parent[x];
+    for(int i = 1; i <= n; ++i){
+        if(!dfn[i]) tarjan(i);
     }
-
-    void Union(int x, int y){
-        int rootX = find(x);
-        int rootY = find(y);
-        if(rootX != rootY){
-            if(rank[rootX] > rank[rootY]){
-                parent[rootY] = rootX;
-            } else if(rank[rootX] < rank[rootY]){
-                parent[rootX] = rootY;
-            } else {
-                parent[rootY] = rootX;
-                rank[rootX]++;
+    indegree_scc.assign(scc_cnt + 1, 0);
+    for(int u = 1; u <= n; ++u){
+        for(int v : graph[u]){
+            if(scc_id[u] != scc_id[v]){
+                indegree_scc[scc_id[v]]++;
             }
         }
     }
-};
-
-int main(){
-    int n , m ;// n个节点，m个边
-    cin >> n >> m;
-
-    vector<vector<int>> graph(n + 1);// 邻接表
-    vector<bool> visited(n + 1, false);// 访问标记
-    vector<int> result;// 结果数组
-    UnionFind uf(n + 1);// 并查集
-
-    while(m--){
-        int a, b;
-        cin >> a >> b;
-        // graph[a].push_back(b); // a一定会告诉b
-        uf.Union(a, b); // a和b在同一个集合中
+    int ans = 0;
+    for(int i = 1; i <= scc_cnt; ++i){
+        if(indegree_scc[i] == 0) ans++;
     }
-
-
-    for(int i = 1; i <= n + 1; i++){
-        if(find(result.begin(), result.end(), uf.find(i)) == result.end()){
-            result.push_back(uf.find(i));
-        }
-    }
-
-    cout<< result.size() << endl;
+    cout << ans << endl;
     return 0;
 }
