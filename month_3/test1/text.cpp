@@ -327,4 +327,102 @@ public:
         // 复制操作不会退出选中状态
     }
 
+    void FIND(string word) {
+        int count = 0;
+        
+        if (is_select) {
+            string selected_text = getSelectedContent();
+            
+            for (size_t pos = 0; ; pos += 1) {
+                pos = selected_text.find(word, pos);
+                if (pos == string::npos) 
+                    break;
+                count++;
+            }
+            
+        } else {
+            
+            string full_text;
+            for (size_t i = 0; i < text.size(); i++) {
+                for (char ch : text[i]) {
+                    full_text.push_back(ch);
+                }
+                if (i < text.size() - 1) {
+                    full_text.push_back(EOL); // 添加换行符，除了最后一行
+                }
+            }
+            
+            // 在完整文本中查找所有匹配项
+            for (size_t pos = 0; ; pos += 1) {
+                pos = full_text.find(word, pos);
+                if (pos == string::npos) 
+                    break;
+                count++;
+            }
+        }
+        
+        // 输出查找结果
+        cout << count << endl;
+    }
+
+    void COUNT(){
+        if(is_select){
+            string selectd_text = getSelectedContent();
+            selectd_text.erase(remove(selectd_text.begin(), selectd_text.end(), EOL), selectd_text.end());
+            selectd_text.erase(remove(selectd_text.begin(), selectd_text.end(), ' '), selectd_text.end());
+            cout << selectd_text.size() << endl;
+        }else{
+            string full_text;
+            for (size_t i = 0; i < text.size(); i++) {
+                for (char ch : text[i]) {
+                    full_text.push_back(ch);
+                }
+            }
+            full_text.erase(remove(full_text.begin(), full_text.end(), EOL), full_text.end());
+            full_text.erase(remove(full_text.begin(), full_text.end(), ' '), full_text.end());
+            cout << full_text.size() << endl;
+        }
+    }
+
+    void PRINT() {
+        for (size_t i = 0; i < text.size(); i++) {
+            for (char ch : text[i]) {
+                cout << ch;
+            }
+            cout << endl;
+        }
+        cout << endl;
+    }
 };
+
+int main(){
+    int n;
+    cin >> n;
+    Text text;
+    string opt1, opt2;
+    while(n--){
+        cin >> opt1;
+        if(opt1 == "MOVE"){
+            cin >> opt2;
+            text.MOVE(opt2);
+        }else if(opt1 == "INSERT"){
+            cin >> opt2;
+            text.INSERT(opt2);
+        }else if(opt1 == "REMOVE"){
+            cin >> opt2;
+            text.REMOVE(opt2);
+        }else if(opt1 == "SHIFT"){
+            text.SHIFT();
+        }else if(opt1 == "COPY"){
+            text.COPY();
+        }else if(opt1 == "FIND"){
+            string word;
+            cin >> word;
+            text.FIND(word);
+        }else if(opt1 == "COUNT"){
+            text.COUNT();
+        }else if(opt1 == "PRINT"){
+            text.PRINT();
+        }
+    }
+}
