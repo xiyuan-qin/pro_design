@@ -6,6 +6,7 @@
 #include<set>
 #include<queue>
 #include<stack>
+#include<fstream>  // 添加文件流头文件
 
 using namespace std;
 
@@ -39,9 +40,27 @@ public:
     int sticky_end_row, sticky_end_col;// 粘滞功能的结束点
     string clipboard;// 粘贴板
     char EOL = '\n';// 换行符
+    ofstream outfile;  // 添加输出文件流对象
 
     Text() : cur_row(0), cur_col(0), is_select(false), is_sticky(false) {
+        // 初始化文本为一个空行
+        text.push_back(vector<char>());
+        row = 1;
+        col = 0;
+
+        // outfile.open("output.txt");
+        // if (!outfile) {
+        //     cerr << "无法创建输出文件!" << endl;
+        //     exit(1);
+        // }
     }
+
+    // ~Text() {
+    //     // 析构函数中关闭文件
+    //     if (outfile.is_open()) {
+    //         cou t.close();
+    //     }
+    // }
 
 
 public:
@@ -94,8 +113,7 @@ public:
             cur_col = 0;
             cur_row = 0;
         }else if(opt == "END"){
-            cur_col = col;
-            cur_row = row - 1;
+            cur_col = text[cur_row].size();
         }
         
         // 如果处于选中状态，移动会导致退出选中状态
@@ -129,20 +147,35 @@ public:
             text[cur_row].insert(text[cur_row].begin() + cur_col, ch);
             cur_col++;
         }else if(opt == "Enter"){
-            // 创建新行，包含当前行光标后面的所有内容
             vector<char> new_line;
             if(cur_col < text[cur_row].size()) {
-                // 将当前行光标位置后面的内容复制到新行
                 new_line.assign(text[cur_row].begin() + cur_col, text[cur_row].end());
-                // 从当前行删除已移动到新行的内容
                 text[cur_row].erase(text[cur_row].begin() + cur_col, text[cur_row].end());
             }
             
-            // 在当前行后面插入新行
             text.insert(text.begin() + cur_row + 1, new_line);
             row++;
             cur_row++;
             cur_col = 0;
+        }else if(opt == "Space"){ 
+            text[cur_row].insert(text[cur_row].begin() + cur_col, ' ');
+            cur_col++;
+        }else if(opt == "Paste"){
+            if(!clipboard.empty()){
+                for(char ch : clipboard){
+                    if(ch == EOL){ // 处理粘贴的换行符
+                        vector<char> new_line(text[cur_row].begin() + cur_col, text[cur_row].end());
+                        text[cur_row].erase(text[cur_row].begin() + cur_col, text[cur_row].end());
+                        text.insert(text.begin() + cur_row + 1, new_line);
+                        row++;
+                        cur_row++;
+                        cur_col = 0;
+                    } else {
+                        text[cur_row].insert(text[cur_row].begin() + cur_col, ch);
+                        cur_col++;
+                    }
+                }
+            }
         }
     }
 
@@ -361,26 +394,31 @@ public:
             }
         }
         
-        // 输出查找结果
+        // 修改输出到文件
         cout << count << endl;
     }
 
     void COUNT(){
         if(is_select){
-            string selectd_text = getSelectedContent();
-            selectd_text.erase(remove(selectd_text.begin(), selectd_text.end(), EOL), selectd_text.end());
-            selectd_text.erase(remove(selectd_text.begin(), selectd_text.end(), ' '), selectd_text.end());
-            cout << selectd_text.size() << endl;
-        }else{
-            string full_text;
-            for (size_t i = 0; i < text.size(); i++) {
-                for (char ch : text[i]) {
-                    full_text.push_back(ch);
+            string selected_text = getSelectedContent();
+            // 直接计算非空格和非换行符的字符数
+            int count = 0;
+            for (char ch : selected_text) {
+                if (ch != ' ' && ch != EOL) {
+                    count++;
                 }
             }
-            full_text.erase(remove(full_text.begin(), full_text.end(), EOL), full_text.end());
-            full_text.erase(remove(full_text.begin(), full_text.end(), ' '), full_text.end());
-            cout << full_text.size() << endl;
+            cout << count << endl;  // 修改输出到文件
+        }else{
+            int count = 0;
+            for (const auto& line : text) {
+                for (char ch : line) {
+                    if (ch != ' ') {
+                        count++;
+                    }
+                }
+            }
+            cout << count << endl;  // 修改输出到文件
         }
     }
 
@@ -389,9 +427,11 @@ public:
             for (char ch : text[i]) {
                 cout << ch;
             }
-            cout << endl;
+            if (i < text.size() - 1) {
+                cout << endl;  
+            }
         }
-        cout << endl;
+        cout << endl; 
     }
 };
 
