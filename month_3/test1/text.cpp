@@ -46,7 +46,12 @@ public:
 
 public:
 
-    void MOVE(string opt){
+    void MOVE(string opt) {
+        // 保存当前位置
+        int old_row = cur_row;
+        int old_col = cur_col;
+        
+        // 执行原有的移动逻辑
         if(opt == "UP"){
             if(cur_row > 0){
                 if(text[cur_row - 1].size() < text[cur_row].size()){
@@ -92,9 +97,32 @@ public:
             cur_col = col;
             cur_row = row - 1;
         }
+        
+        // 如果处于选中状态，移动会导致退出选中状态
+        if (is_select) {
+            is_select = false;
+        }
+        
+        // 如果处于粘滞状态，更新结束点
+        if (is_sticky && (old_row != cur_row || old_col != cur_col)) {
+            sticky_end_row = cur_row;
+            sticky_end_col = cur_col;
+        }
     }
 
-    void INSERT(string opt){
+    void INSERT(string opt) {
+        // 如果处于选中状态，先删除选中内容
+        if (is_select) {
+            deleteSelectedContent();
+            is_select = false;
+        }
+        
+        // 如果处于粘滞状态，不执行插入操作
+        if (is_sticky) {
+            return;
+        }
+        
+        // 执行原有的插入逻辑
         if(opt == "Char"){
             char ch;
             cin >> ch;
@@ -116,6 +144,187 @@ public:
             cur_row++;
             cur_col = 0;
         }
+    }
+
+    void REMOVE(string opt) {
+        // 如果处于选中状态，删除选中内容
+        if (is_select) {
+            deleteSelectedContent();
+            is_select = false;
+            return;
+        }
+        
+        // 如果处于粘滞状态，不执行删除操作
+        if (is_sticky) {
+            return;
+        }
+        
+        if (opt == "Del") {
+            if (cur_row == row - 1 && cur_col == text[cur_row].size()) {
+                return; // 在文件末尾，忽略操作
+            }
+            
+            if (cur_col == text[cur_row].size()) {
+                text[cur_row].insert(text[cur_row].end(), text[cur_row + 1].begin(), text[cur_row + 1].end());
+                text.erase(text.begin() + cur_row + 1);
+                row--;
+            } 
+            else {
+                text[cur_row].erase(text[cur_row].begin() + cur_col);
+            }
+        }
+        else if (opt == "Backspace") {
+            if (cur_row == 0 && cur_col == 0) {
+                return;
+            }
+            if (cur_col == 0) {
+                cur_col = text[cur_row - 1].size();
+
+                text[cur_row - 1].insert(text[cur_row - 1].end(), text[cur_row].begin(), text[cur_row].end());
+                text.erase(text.begin() + cur_row);
+                
+                row--;
+                cur_row--;
+                
+            }
+            else {
+                text[cur_row].erase(text[cur_row].begin() + cur_col - 1);
+                cur_col--;
+            }
+        }
+    }
+
+    void SHIFT() {
+        if (is_sticky) {
+            // 关闭粘滞功能
+            is_sticky = false;
+            
+            // 检查光标是否移动
+            if (sticky_start_row != cur_row || sticky_start_col != cur_col) {
+                // 进入选中状态
+                is_select = true;
+                sticky_end_row = cur_row;
+                sticky_end_col = cur_col;
+            }
+        } else {
+            // 如果已经处于选中状态，只退出选中状态但保留记录点
+            if (is_select) {
+                is_select = false;
+            } else {
+                // 启动粘滞功能时，记录当前光标位置
+                sticky_start_row = cur_row;
+                sticky_start_col = cur_col;
+            }
+            is_sticky = true;
+        }
+    }
+
+    // 规范化选中区域，确保start在end之前
+    void normalizeSelection() {
+        // 确保起点在终点之前（行优先）
+        if (sticky_start_row > sticky_end_row || 
+            (sticky_start_row == sticky_end_row && sticky_start_col > sticky_end_col)) {
+            swap(sticky_start_row, sticky_end_row);
+            swap(sticky_start_col, sticky_end_col);
+        }
+    }
+
+    // 获取选中内容
+    string getSelectedContent() {
+        normalizeSelection();
+        string content;
+        
+        // 特殊情况：选中内容在同一行
+        if (sticky_start_row == sticky_end_row) {
+            for (int i = sticky_start_col; i < sticky_end_col; ++i) {
+                content.push_back(text[sticky_start_row][i]);
+            }
+            return content;
+        }
+        
+        // 第一行（从起始点到行尾）
+        for (int i = sticky_start_col; i < text[sticky_start_row].size(); ++i) {
+            content.push_back(text[sticky_start_row][i]);
+        }
+        content.push_back(EOL);
+        
+        // 中间的整行
+        for (int i = sticky_start_row + 1; i < sticky_end_row; ++i) {
+            for (char ch : text[i]) {
+                content.push_back(ch);
+            }
+            content.push_back(EOL);
+        }
+        
+        // 最后一行（从行首到结束点）
+        for (int i = 0; i < sticky_end_col; ++i) {
+            content.push_back(text[sticky_end_row][i]);
+        }
+        
+        return content;
+    }
+
+    // 删除选中内容
+    void deleteSelectedContent() {
+        normalizeSelection();
+        
+        // 将光标移至选中区域起点
+        cur_row = sticky_start_row;
+        cur_col = sticky_start_col;
+        
+        // 特殊情况：选中内容在同一行
+        if (sticky_start_row == sticky_end_row) {
+            text[cur_row].erase(
+                text[cur_row].begin() + sticky_start_col,
+                text[cur_row].begin() + sticky_end_col
+            );
+            return;
+        }
+        
+        // 保存起始行中保留的部分
+        vector<char> first_line_preserved(
+            text[sticky_start_row].begin(),
+            text[sticky_start_row].begin() + sticky_start_col
+        );
+        
+        // 保存末尾行中保留的部分
+        vector<char> last_line_preserved(
+            text[sticky_end_row].begin() + sticky_end_col,
+            text[sticky_end_row].end()
+        );
+        
+        // 合并首尾两行的保留部分
+        first_line_preserved.insert(
+            first_line_preserved.end(),
+            last_line_preserved.begin(),
+            last_line_preserved.end()
+        );
+        
+        // 删除从起始行到结束行的所有内容
+        text.erase(
+            text.begin() + sticky_start_row,
+            text.begin() + sticky_end_row + 1
+        );
+        
+        // 插入合并后的行
+        text.insert(text.begin() + sticky_start_row, first_line_preserved);
+        
+        // 更新行数
+        row = text.size();
+    }
+
+    void COPY() {
+        // 如果是选中状态，复制选中内容
+        if (is_select) {
+            clipboard = getSelectedContent();
+        } else {
+            // 否则复制当前行
+            clipboard.clear();
+            for (char ch : text[cur_row]) {
+                clipboard.push_back(ch);
+            }
+        }
+        // 复制操作不会退出选中状态
     }
 
 };
