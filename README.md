@@ -23,14 +23,26 @@
 │   └── file/     # 文件系统与配额管理
 │       └── file.cpp
 ├── week_7/       # 第七周练习与项目
+│   └── graph/    # 图论算法实现
+│       └── dijkstra.cpp
 ├── week_8/       # 第八周练习与项目
+│   └── sort/     # 排序算法比较
+│       └── sortAlgo.cpp
 ├── week_9/       # 第九周练习与项目
+│   └── hash/     # 哈希表实现
+│       └── hashMap.cpp
 ├── month_1/      # 第一个月项目集
+│   └── miniGame/ # 命令行小游戏
+│       └── snake.cpp
 ├── month_2/      # 第二个月项目集
 │   └── test1/    # 聊天窗口管理系统
 │       └── poorCat.cpp
 ├── month_3/      # 第三个月项目集
+│   └── database/ # 简易数据库系统
+│       └── miniDB.cpp
 └── resources/    # 学习资源和参考资料
+    ├── cheatsheet.pdf
+    └── algorithm_templates/
 ```
 
 ## 特色项目
@@ -56,9 +68,33 @@
 - **难度**: ★★★★☆
 - **运行方法**: 通过命令行操作测试文件系统功能
 
+### 最短路径算法实现 (Week 7)
+- **文件位置**: `/week_7/graph/dijkstra.cpp`
+- **问题描述**: 实现Dijkstra算法解决图中最短路径问题
+- **算法**: 最短路径、优先队列、图论
+- **难度**: ★★★★☆
+- **运行方法**: 输入图的节点数、边数及各边权重，获取最短路径结果
+
+### 简易数据库系统 (Month 3)
+- **文件位置**: `/month_3/database/miniDB.cpp`
+- **问题描述**: 实现支持基本CRUD操作的简易内存数据库
+- **核心概念**: 索引结构、查询优化、事务处理
+- **难度**: ★★★★★
+- **运行方法**: 通过SQL风格命令操作数据库系统
+
 ## 更新日志
 
 ### 2025年春季学期
+- **2025-05-20**: 添加简易数据库系统(month_3)
+  - 支持基本SQL语句：SELECT, INSERT, UPDATE, DELETE
+  - 实现B+树索引和哈希索引
+  - 添加简单的事务支持和回滚功能
+
+- **2025-05-01**: 完成图论算法实现(week_7)
+  - 实现Dijkstra最短路径算法
+  - 添加图的邻接表和邻接矩阵表示
+  - 包含性能测试和多种图类型示例
+
 - **2025-04-15**: 添加文件系统配额管理项目(week_6)
   - 实现了文件/目录创建与删除功能
   - 支持目录配额(ld)和后代配额(lr)的限制
@@ -85,14 +121,14 @@
 对于大多数C++程序，可以使用以下方式编译：
 
 ```bash
-g++ -std=c++11 <文件名>.cpp -o <输出文件名>
+g++ -std=c++17 <文件名>.cpp -o <输出文件名>
 ```
 
 ### 特定项目编译示例
 
 1. **棋盘问题**:
 ```bash
-g++ -std=c++11 week_3/test5/chessBoard.cpp -o chessBoard
+g++ -std=c++17 week_3/test5/chessBoard.cpp -o chessBoard
 ./chessBoard
 ```
 
@@ -108,14 +144,26 @@ g++ -std=c++17 week_6/file/file.cpp -o fileSystem
 ./fileSystem
 ```
 
-4. **调试模式编译**:
+4. **图论算法**:
 ```bash
-g++ -std=c++11 -g <文件名>.cpp -o <输出文件名>
+g++ -std=c++17 week_7/graph/dijkstra.cpp -o shortestPath
+./shortestPath
 ```
 
-5. **优化编译**:
+5. **简易数据库**:
 ```bash
-g++ -std=c++11 -O2 <文件名>.cpp -o <输出文件名>
+g++ -std=c++17 month_3/database/miniDB.cpp -o database
+./database
+```
+
+6. **调试模式编译**:
+```bash
+g++ -std=c++17 -g <文件名>.cpp -o <输出文件名>
+```
+
+7. **优化编译**:
+```bash
+g++ -std=c++17 -O2 <文件名>.cpp -o <输出文件名>
 ```
 
 ## 常用数据结构和算法
@@ -128,12 +176,15 @@ g++ -std=c++11 -O2 <文件名>.cpp -o <输出文件名>
 - 图论算法
 - 搜索算法
 - 数组、向量、链表、树等数据结构
+- 哈希表与索引结构
+- 排序与查找算法
 
 ## 学习资源
 
 - [C++官方文档](https://en.cppreference.com/w/)
 - [算法可视化网站](https://visualgo.net/)
 - [LeetCode题库](https://leetcode.com/)
+- [C++性能优化指南](https://www.cplusplus.com/doc/tutorial/)
 - 课程推荐教材和讲义
 
 ## 贡献指南
@@ -143,7 +194,12 @@ g++ -std=c++11 -O2 <文件名>.cpp -o <输出文件名>
 1. 提交bug或问题报告
 2. 改进现有代码或文档
 3. 添加新的项目实现或解决方案
+4. 分享你的学习经验和技巧
 
 ## 联系方式
 
 如有问题或建议，请联系[邮箱](mailto:qxytunner@gmail.com)
+
+## 许可证
+
+本项目采用MIT许可证，详情请参见LICENSE文件。
